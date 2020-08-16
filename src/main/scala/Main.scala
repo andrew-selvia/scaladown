@@ -1,3 +1,5 @@
+import cats.data
+import cats.data.{NonEmptyChain, NonEmptyList}
 import cats.effect.{Blocker, ContextShift, ExitCode, IO, IOApp}
 import laika.api.{MarkupParser, Renderer, Transformer}
 import laika.ast._
@@ -21,6 +23,22 @@ object Main extends IOApp {
         .to(HTML)
         .using(GitHubFlavor)
         .rendering {
+          // https://github.com/planet42/Laika/blob/85d757ee72ebc73c2bfb6ad099e01d2802ca3975/core/shared/src/main/scala/laika/render/HTMLRenderer.scala#L144
+          case (fmt, Title(content, opt)) =>
+            // <a href="#embed-screenshots-in-apple-product-images">
+            //      Embed Screenshots in Apple Product Images
+            //    </a>
+//            fmt.indent("h1", opt, Seq(SpanLink(List(), ExternalTarget(s"#${opt.id.getOrElse("nah")}"))))
+            fmt.rawElement("h1", opt,
+              fmt.indentedChildren(List(SpanLink(content, ExternalTarget(s"#${opt.id.getOrElse("")}"))))
+              + fmt.newLine
+            )
+          case (fmt, Header(level, content, opt)) =>
+//            fmt.newLine + fmt.element("h"+level.toString, opt,content)
+            fmt.rawElement("h"+level, opt,
+              fmt.indentedChildren(List(SpanLink(content, ExternalTarget(s"#${opt.id.getOrElse("")}"))))
+                + fmt.newLine
+            )
           case (fmt, nl: NavigationList) => {
 //            return fmt.element("ul", options, content, "id" -> "myUL")
 
@@ -56,11 +74,18 @@ object Main extends IOApp {
 //                      Paragraph(nh.title.content, nh.options + Style.navHeader)
                       SpanSequence(nh.title.content, Styles("caret"))
                     case nl: NavigationLink   =>
-                      val styles =
-                        if (nl.selfLink) Style.active
-                        else NoOpt
+//                      val styles =
+//                        if (nl.selfLink) Style.active
+//                        else NoOpt
 //                      Paragraph(Seq(SpanLink(nl.title.content, nl.target)), nl.options + styles)
                       SpanSequence(Seq(SpanLink(nl.title.content, nl.target)), if (nl.content.isEmpty) NoOpt else Styles("caret"))
+
+//                      val segments = nl.target.asInstanceOf[InternalTarget].absolutePath.asInstanceOf[SegmentedPath].segments
+//                      val segments2 = "journal" +: segments
+//                      val part3 = segments2.toNonEmptyList.toList.dropRight(1) :+ s"${segments2.last}.html"
+//                      val thing = NonEmptyChain.fromNonEmptyList(NonEmptyList(part3.head, part3.tail))
+//                      val target1 = InternalTarget(Path(List("")), SegmentedRelativePath(thing))
+//                      SpanSequence(Seq(SpanLink(nl.title.content, target1)), if (nl.content.isEmpty) NoOpt else Styles("caret"))
                   }
                   val children =
                     if (item.content.isEmpty) Nil
