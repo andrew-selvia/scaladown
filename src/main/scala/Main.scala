@@ -28,6 +28,23 @@ object Main extends IOApp {
               fmt.indentedChildren(List(SpanLink(content, ExternalTarget(s"#${opt.id.getOrElse("")}"))))
                 + fmt.newLine
             )
+//          case SpanLink(content, target, title, opt)  => fmt.element("a", opt, content, linkAttributes(target, title):_*)
+          case (fmt, SpanLink(content, target, title, opt)) =>
+            def linkAttributes (target: Target, title: Option[String]): Seq[(String, String)] = {
+              val href = target match {
+                case InternalTarget(absolutePath, relPath) =>
+                  // TODO - 0.16 - generalize suffix check
+//                  if (relPath.suffix.contains("md") && !relPath.toString.startsWith("..")) s"journal/${fmt.internalLink(relPath)}"
+//                  else relPath.toString
+                  s"journal${absolutePath.toString}"
+                case ExternalTarget(url) => url
+              }
+              fmt.optAttributes(
+                "href" -> Some(href),
+                "title" -> title.map(fmt.text)
+              )
+            }
+            fmt.element("a", opt, content, linkAttributes(target, title):_*)
           case (fmt, nl: NavigationList) =>
             def navigationToBulletList (navList: NavigationList): BulletList = {
               val bullet = StringBullet("*")
