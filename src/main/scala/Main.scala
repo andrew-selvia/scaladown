@@ -51,13 +51,7 @@ object Main extends IOApp {
                 items.map { item =>
                   val target: Block = item match {
                     case nh: NavigationHeader =>
-//                      SpanSequence(nh.title.content, Styles("caret"))
-                      SpanSequence(
-                        nh.title.content.head match {
-                          case text: Text if text.content == "/" => Seq(Text("Journal"))
-                          case _ => nh.title.content
-                        },
-                        Styles("caret"))
+                      SpanSequence(nh.title.content, Styles("caret"))
                     case nl: NavigationLink   =>
                       SpanSequence(Seq(SpanLink(nl.title.content, nl.target)), if (nl.content.isEmpty) NoOpt else Styles("caret"))
                   }
