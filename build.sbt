@@ -1,6 +1,9 @@
 name := "scaladown"
-version := "0.1"
+version := "0.0.0"
 scalaVersion := "2.13.3"
-
-libraryDependencies += "org.planet42" %% "laika-io" % "0.15.0"
-libraryDependencies += "com.lihaoyi" %% "os-lib" % "0.7.1"
+useCoursier := false
+libraryDependencies ++= Seq(
+  "com.github.pathikrit" %% "better-files" % "3.9.1",
+  "org.scala-lang.modules" %% "scala-xml" % "2.0.0",
+  "org.planet42" %% "laika-io" % "0.17.1"
+)

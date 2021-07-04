@@ -1,11 +1,25 @@
 import cats.effect.{Blocker, ContextShift, ExitCode, IO, IOApp}
 import laika.api.Transformer
 import laika.ast._
-import laika.format.{HTML, Markdown}
-import laika.io.implicits._
+import laika.factory.{RenderContext, RenderFormat}
+import laika.format.Markdown
+import laika.io.implicits.ImplicitTextTransformerOps
+import laika.io.model.InputTree
 import laika.markdown.github.GitHubFlavor
+import laika.render.epub.XHTMLRenderer
+import laika.render.{HTMLFormatter, XHTMLFormatter}
+import laika.rewrite.DefaultTemplatePath
 
 import scala.concurrent.ExecutionContext
+
+object XHTML extends RenderFormat[HTMLFormatter] {
+
+  override val description: String = "XHTML"
+  val fileSuffix: String = "xhtml"
+  val defaultRenderer: (HTMLFormatter, Element) => String = XHTMLRenderer
+  val formatterFactory: RenderContext[HTMLFormatter] => HTMLFormatter = XHTMLFormatter
+
+}
 
 object Main extends IOApp {
   implicit val cs: ContextShift[IO] = IO.contextShift(ExecutionContext.global)
@@ -13,7 +27,7 @@ object Main extends IOApp {
     Blocker[IO].use { blocker =>
       val directoryTransformer = Transformer
         .from(Markdown)
-        .to(HTML)
+        .to(XHTML)
         .using(GitHubFlavor)
         .rendering {
           // https://github.com/planet42/Laika/blob/85d757ee72ebc73c2bfb6ad099e01d2802ca3975/core/shared/src/main/scala/laika/render/HTMLRenderer.scala#L144
@@ -44,36 +58,50 @@ object Main extends IOApp {
 //              )
 //            }
 //            fmt.element("a", opt, content, linkAttributes(target, title):_*)
-          case (fmt, nl: NavigationList) =>
-            def navigationToBulletList (navList: NavigationList): BulletList = {
-              val bullet = StringBullet("*")
-              def transformItems (items: Seq[NavigationItem]): Seq[BulletListItem] = {
-                items.map { item =>
-                  val target: Block = item match {
-                    case nh: NavigationHeader =>
-                      SpanSequence(nh.title.content, Styles("caret"))
-                    case nl: NavigationLink   =>
-                      SpanSequence(Seq(SpanLink(nl.title.content, nl.target)), if (nl.content.isEmpty) NoOpt else Styles("caret"))
-                  }
-                  val children =
-                    if (item.content.isEmpty) Nil
-                    else Seq(BulletList(transformItems(item.content), bullet, Styles("nested")))
-                  BulletListItem(target +: children, bullet)
-                }
-              }
-
-              BulletList(transformItems(navList.content), bullet, navList.options + Options(Option("myUL"), Set())) // TODO:  I added the last option
-            }
-
-            fmt.child(navigationToBulletList(nl))
+//          case (fmt, nl: NavigationList) =>
+//            def navigationToBulletList (navList: NavigationList): BulletList = {
+//              val bullet = StringBullet("*")
+//              def transformItems(items: Seq[NavigationItem]): Seq[BulletListItem] = {
+//                items.map { item =>
+//                  val target: Block = item match {
+//                    case nh: NavigationHeader =>
+//                      SpanSequence(nh.title.content, Styles("caret"))
+//                    case nl: NavigationLink   =>
+//                      SpanSequence(Seq(SpanLink(nl.title.content, nl.target)), if (nl.content.isEmpty) NoOpt else Styles("caret"))
+//                  }
+//                  val children =
+//                    if (item.content.isEmpty) Nil
+//                    else Seq(BulletList(transformItems(item.content), bullet, Styles("nested")))
+//                  BulletListItem(target +: children, bullet)
+//                }
+//              }
+//
+//              BulletList(transformItems(navList.content), bullet, navList.options + Options(Option("myUL"), Set())) // TODO:  I added the last option
+//            }
+//
+//            fmt.child(navigationToBulletList(nl))
         }
         .io(blocker)
         .parallel[IO]
         .build
-      directoryTransformer
-        .fromDirectory(args.head)
-        .toDirectory(args(1))
-        .transform
+
+//      val inputs = InputTree[F].empty
+//        .addDirectory(args.head)
+//        .addClasspathResource("default.template.xhtml", DefaultTemplatePath.forSuffix("xhtml"))
+//      }}}
+
+      directoryTransformer.use {
+        _
+//          .fromInputTree(inputs)
+//          .fromInput(
+//            InputTree[IO]
+//              .addDirectory(args.head)
+////              .addClasspathResource("/default.template.xhtml", DefaultTemplatePath.forSuffix("xhtml"))
+//              )
+          .fromDirectory(args.head)
+          .toDirectory(args(1))
+          .transform
+      }
     }.as(ExitCode.Success)
   }
 }
