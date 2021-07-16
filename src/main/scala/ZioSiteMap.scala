@@ -20,8 +20,7 @@ object ZioSiteMap extends App {
       inputPath
         .listRecursively
         .filter(_.extension.contains(".xhtml"))
-        .map(file =>
-          urlElement(file.pathAsString.replace(inputPath.pathAsString, "https://andrew.selvia.com")))
+        .map(file => urlElement(file.pathAsString.replace(inputPath.pathAsString, "https://andrew.selvia.com/journal")))
         .toList
         .sortBy(_ \ "loc" toString)
     val urlsetElement: Elem =
