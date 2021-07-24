@@ -24,10 +24,13 @@ object DirectoryContentsDirectives {
                     .content
                     .content
                     .flatMap {
-                      case Title(content, _) => content.flatMap {
-                        case Text(content, _) => Some(content)
-                        case _ => None
-                      }.headOption
+                      case Title(content, _) =>
+                        content
+                          .flatMap {
+                            case Text(content, _) => Some(content)
+                            case _ => None
+                          }
+                          .headOption
                       case _ => None
                     }
                     .headOption
