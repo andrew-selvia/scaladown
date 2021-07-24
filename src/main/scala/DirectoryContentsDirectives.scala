@@ -84,11 +84,15 @@ object DirectoryContentsDirectives {
     val isDirectory = path.endsWith("index.xhtml")
     val selector = if (isDirectory) "folder" else "doc"
     <div class="directory-contents-list-item-div">
-      <svg:svg class={selector} width={if (isDirectory) "19px" else "15px"} height={if (isDirectory) "15px" else "19px"}>
-        <svg:title>{title}</svg:title>
-        <svg:use href={s"/assets/images/icons/$selector.fill.svg#Shape"}/>
-      </svg:svg>
-      <a href={path}>{title}</a>
+      <div class="directory-contents-list-item-icon">
+        <svg:svg class={selector} width={if (isDirectory) "19px" else "15px"} height={if (isDirectory) "15px" else "19px"}>
+          <svg:title>{title}</svg:title>
+          <svg:use href={s"/assets/images/icons/$selector.fill.svg#Shape"}/>
+        </svg:svg>
+      </div>
+      <div class="directory-contents-list-item-link">
+        <a href={path}>{title}</a>
+      </div>
     </div>
   }
 }
